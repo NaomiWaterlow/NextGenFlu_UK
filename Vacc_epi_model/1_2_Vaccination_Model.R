@@ -284,6 +284,6 @@ ggplot(plot_subset, aes(x = Date, y = total_vacc, colour = age_group)) +
          axis.text = element_text(size = 12))
 
 total_vaccines[, Date := as.Date(Date, origin = "1970-01-01")]
-#save(total_vaccines, file = here::here(paste0("Vaccine_model_output_",name_run,".Rdata")))
+save(total_vaccines, file = here::here( "UK_output", paste0("Vaccine_model_output_",name_run,".Rdata")))
 
 
