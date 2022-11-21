@@ -1,9 +1,7 @@
 #### Economic analysis - calculating the basics
 
-# load libraries
-library(qs)
 # load in saved epi model output file if want to run econ alone
-load(file = here::here("UK_output", "total_cases_time.Rdata"))
+#load(file = here::here("UK_output", "total_cases_time.Rdata"))
 
 
 #### sections in this script are:
@@ -12,7 +10,25 @@ load(file = here::here("UK_output", "total_cases_time.Rdata"))
 # - calulating annual non-death QALYs
 # - calculating annual costs
 
+# input data for defalting the healthcare costs 
+# this was for inflating to 2019
+#< 2009/10- 2014/15 HCHS, 2015/16 - 2018/9 NHSCII
+# 2008/9 HCHS just taking halfway between pay and prices
+# if(base_scenario_to_use == 2){
+# inflater_years <- c(4.1, 0.6,3,2.1,1.7,1.1, 0.9,0.35, 2.13,1.16,2.31)
+# } else if (base_scenario_to_use == 1){
+#   inflater_years <- 0
+# } else {"Not a valid base scenario"}
 
+# this is the version for deflating
+# 1995 from the PPSRU reports. Index at 1995 was 166, and at 2008 was 267
+
+
+if(base_scenario_to_use == 2){
+  inflator <- 1+(267-166)/166
+} else if (base_scenario_to_use == 1){
+  inflater <- 1
+} else {"Not a valid base scenario"}
 ####### Annual outcomes ######
 
 # sum across years 
@@ -144,6 +160,7 @@ carrat_symptoms[i,"beta"] <- parms[2]
 
 }
 
+
 # check the outputs look reasonable
 j <- 6
 x <- seq(0,1, 0.01)
@@ -196,12 +213,12 @@ outcomes <- data.table(rbind(outcomes, outcomes2))
 # cast table so can work on outcomes
 outcomes_c <- dcast.data.table(outcomes, sample+scenario+Year+Virus+variable+age +risk+value ~ outcome,
                                value.var = "outcome_value")
-outcomes_c[, f_no_symptoms := value - symptoms]
-outcomes_c[, f_death := death]
-outcomes_c[, f_hosp := hosp - death]
-outcomes_c[, f_gp := GP - f_hosp ]
-outcomes_c[, f_fever := fever - f_hosp ]
-outcomes_c[, f_mild := symptoms - f_fever ]
+# outcomes_c[, f_no_symptoms := value - symptoms]
+# outcomes_c[, f_death := death]
+# outcomes_c[, f_hosp := hosp - death]
+# outcomes_c[, f_gp := GP - f_hosp ]
+# outcomes_c[, f_fever := fever - f_hosp ]
+# outcomes_c[, f_mild := symptoms - f_fever ]
 
 outcomes_c[, f_death := death]
 outcomes_c[, f_hosp := hosp ]
@@ -268,73 +285,77 @@ annual_nondeath_outcomes[, QALYS := V1 * QAlY_multiplier]
 
 
 ###### Annual costs #######
+
+lnmu  =function(mean, sd) log(mean)-0.5*log(1+(sd/mean)^2)
+lnsig =function(mean, sd) sqrt(log(1+(sd/mean)^2))
+
 c_mean <- 839
 c_sd <- 192.1
-
+# take asmples and deflate to 1995
 costs_multiplier_hospital <- rlnorm(n_samples, 
-                               mean  = exp(c_mean + (c_sd^2)/2), 
-                               sd = sqrt((exp(c_sd^2)-1)*exp(2*c_mean + c_sd^2)))
+                               mean  = lnmu(c_mean, c_sd), 
+                               sd = lnsig(c_mean, c_sd))/inflator
 
-
-costs_multiplier_hospital <- rlnorm(n_samples, 
-                                    meanlog  = c_mean, 
-                                    sdlog = c_sd)
-mean(exp(rlnorm(10000, 
-       mean  = log(c_mean), 
-       sd = log(c_sd))))
-
-## ? do the log normal
-
-
-# assume for now htey are just normal
-# samples from the costs
-costs_multiplier_hospital <- rnorm(n_samples, 
-                                    mean  = 839, 
-                                    sd = 192.1)
-costs_multiplier_gp <- rnorm(n_samples, 
-                                   mean  = 37, 
-                                   sd = 8.4)
+c_mean <- 37
+c_sd <- 8.4
+# take asmples and deflate to 1995
+costs_multiplier_gp <- rlnorm(n_samples, 
+                                    mean  = lnmu(c_mean, c_sd), 
+                                    sd = lnsig(c_mean, c_sd))/inflator
 
 # for the vaccination one, change the triangular to a gamma. 
-
-
-# calculate gamma distribuition
-f.gamma <- function(shape, scale, x) {
-  p <- pgamma(q=x, shape=shape, scale=scale)
-  return(p)#logit_p)
-}
-
-#calculate for the theta and probs what is needed
-objective <- function(theta, x, prob, ...) {
-
-  ab <- exp(theta) # Parameters are the *logs* of alpha and beta
-  #work out what the logit of the quanitle is for these parameters
-  fit <- f.gamma(ab[1], ab[2], x, ...)
-  # return the sum of squares. 
-  return (delta(fit, prob))
-}
-# Sums of squares.
-delta <- function(fit, actual) sum((fit-actual)^2)
-# starting values
-start <-log(c(10,1))  
-# qunatiles needed
-quantiles_to_fit<- c(0.025,0.5,0.975)
-# for each row, fit a gamma distribution
-  
-  x <- as.numeric(12,15.85,20)
-  
-  sol <- optim(f=objective,p=start,
-               method="L-BFGS-B", 
-               x=x,
-               prob=c(quantiles_to_fit))
-               
-  parms <- exp(sol$par)           # Estimates of alpha and beta
-  vacc_cost_shape<- parms[1]
-  vacc_cost_scale <- parms[2]
-  
-  costs_multiplier_vacc <- rgamma(n_samples, 
-                               shape  = vacc_cost_shape, 
-                               scale = vacc_cost_scale)
+# 
+# # calculate gamma distribuition
+# f.gamma <- function(shape, scale, x) {
+#   p <- pgamma(q=x, shape=shape, scale=scale)
+#   return(p)#logit_p)
+# }
+# 
+# #calculate for the theta and probs what is needed
+# objective <- function(theta, x, prob, ...) {
+# 
+#   ab <- exp(theta) # Parameters are the *logs* of alpha and beta
+#   #work out what the logit of the quanitle is for these parameters
+#   fit <- f.gamma(ab[1], ab[2], x, ...)
+#   # return the sum of squares. 
+#   return (delta(fit, prob))
+# }
+# # Sums of squares.
+# delta <- function(fit, actual) sum((fit-actual)^2)
+# # starting values
+# start <-log(c(10,1))  
+# # qunatiles needed
+# quantiles_to_fit<- c(0.025,0.5,0.975)
+# # for each row, fit a gamma distribution
+#   
+#   x <- as.numeric(12,15.55,20)
+#   
+#   sol <- optim(f=objective,p=start,
+#                method="L-BFGS-B", 
+#                x=x,
+#                prob=c(quantiles_to_fit))
+#                
+#   parms <- exp(sol$par)           # Estimates of alpha and beta
+#   vacc_cost_shape<- parms[1]
+#   vacc_cost_scale <- parms[2]
+#   
+#   # check the outputs look reasonable
+# 
+#   x <- seq(0,30, 0.01)
+#   y <- dgamma(shape =vacc_cost_shape, 
+#              scale = vacc_cost_scale, 
+#              x = x)
+# #   
+#   y <-rgamma(n= 10000, shape =vacc_cost_shape, 
+#              scale = vacc_cost_scale )
+#   quantile(y, probs = c(0.025,0.5,0.975))
+#   plot(x,y)
+#   
+  # take constnat vaccine price but deflate to 1995
+  costs_multiplier_vacc <- rep( vacc_delivery_price , n_samples )/inflator
+  #rgamma(n_samples,
+                             #  shape  = vacc_cost_shape,
+                             #  scale = vacc_cost_scale)
 
   costs_vaccines <- data.table(sample = 1:n_samples, 
              vacc_costs = costs_multiplier_vacc)
@@ -371,6 +392,8 @@ quantiles_to_fit<- c(0.025,0.5,0.975)
  
  annual_costs[costs_vaccines, on = "sample", vacc_costs_dose := i.vacc_costs]
   
- annual_costs[,vacc_costs := vaccines_given*vacc_costs]
+ annual_costs[,vacc_costs := vaccines_given*vacc_costs_dose]
  annual_costs[,total_costs := outcome_costs + vacc_costs]
+
+ 
  

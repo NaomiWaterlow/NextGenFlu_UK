@@ -686,27 +686,35 @@ run_epidemic_model_yearcross <- function(vaccine_scenarios, year_in_question, be
   
   waning_rate = vaccine_scenarios[[scenario]][["waning_rate"]]
   
+  # vaccine calendar - either between the specified dates or over the whole years
   if(length(vaccine_scenarios[[scenario]][["dates"]])>1){
-    dates = seq(from = as.Date(paste0(year(begin_date), vaccine_scenarios[[scenario]][["dates"]][1])),
-                to = as.Date(paste0(year(begin_date), vaccine_scenarios[[scenario]][["dates"]][2])),
-                by = 7)
+    # check whether looping over a year
+    if(as.Date(paste0(years[i], vaccine_scenarios[[scenario]][["dates"]][1])) >
+       as.Date(paste0(years[i], vaccine_scenarios[[scenario]][["dates"]][2]))){
+      dates = seq(from = as.Date(paste0(years[i], vaccine_scenarios[[scenario]][["dates"]][1])),
+                  to = as.Date(paste0(years[i]+1, vaccine_scenarios[[scenario]][["dates"]][2])),
+                  by = 7)
+    } else{ 
+      dates = seq(from = as.Date(paste0(years[i], vaccine_scenarios[[scenario]][["dates"]][1])),
+                  to = as.Date(paste0(years[i], vaccine_scenarios[[scenario]][["dates"]][2])),
+                  by = 7)  }
   } else {
-    dates = seq(from = as.Date(paste0(year(begin_date), vaccine_scenarios[[scenario]][["dates"]][1])),
-                to = as.Date(paste0(year(begin_date)+1, vaccine_scenarios[[scenario]][["dates"]][1]))-1,
-                by = 7)
-  }
+    dates = seq(from = as.Date(paste0(years[i], vaccine_scenarios[[scenario]][["dates"]][1])),
+                to = as.Date(paste0(years[i+1], vaccine_scenarios[[scenario]][["dates"]][1]))-1,
+                by = 7)}
   # Coverage
   
   if(location == "Kenya"){
     target_coverage <-  vaccine_scenarios[[scenario]][["coverage"]]
   }
   if(location == "UK"){
-    target_coverage <-  vaccine_scenarios[[scenario]][["coverage"]][i,2:15]
+    target_coverage <-  vaccine_scenarios[[scenario]][["coverage"]][i,2:22]
   }
 
-  new_coverage = change_coverage(matrix(rep(0,num_age_groups*3*length(dates)), 
-                                        ncol = num_age_groups*3),
-                                 target_coverage)
+  # new_coverage = change_coverage(matrix(rep(0,num_age_groups*3*length(dates)), 
+  #                                       ncol = num_age_groups*3),
+  #                                target_coverage)
+  new_coverage <-  sweep(coverage_timing, 2, target_coverage, "*")
   # specify the demography
   if(location == "Kenya"){
     demography_input <- popken[,which(years == epidemics_list[[epidemic]]["year"])+1]}

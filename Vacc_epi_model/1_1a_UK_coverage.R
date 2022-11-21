@@ -22,3 +22,17 @@ colnames(UK_coverage) <- groups
 
 ### Add the population sizes. 
 demography_UK <- as.matrix(read_csv(here::here("UK_data","demography_UK.csv")))
+
+# coverage over time
+coverage_timing <- as.matrix(read.csv(here::here("UK_data", "coverage_timing.csv"), sep = ","))
+
+
+
+
+
+
+
+
+
+
+

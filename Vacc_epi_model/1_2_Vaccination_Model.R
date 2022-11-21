@@ -31,9 +31,16 @@ for(scenario in target_scenarios){
          
          # vaccine calendar - either between the specified dates or over the whole years
          if(length(vaccine_scenarios[[scenario]][["dates"]])>1){
+            # check whether looping over a year
+            if(as.Date(paste0(years[i], vaccine_scenarios[[scenario]][["dates"]][1])) >
+               as.Date(paste0(years[i], vaccine_scenarios[[scenario]][["dates"]][2]))){
             dates = seq(from = as.Date(paste0(years[i], vaccine_scenarios[[scenario]][["dates"]][1])),
-                        to = as.Date(paste0(years[i], vaccine_scenarios[[scenario]][["dates"]][2])),
+                        to = as.Date(paste0(years[i]+1, vaccine_scenarios[[scenario]][["dates"]][2])),
                         by = 7)
+            } else{ 
+               dates = seq(from = as.Date(paste0(years[i], vaccine_scenarios[[scenario]][["dates"]][1])),
+                           to = as.Date(paste0(years[i], vaccine_scenarios[[scenario]][["dates"]][2])),
+                           by = 7)  }
          } else {
             dates = seq(from = as.Date(paste0(years[i], vaccine_scenarios[[scenario]][["dates"]][1])),
                         to = as.Date(paste0(years[i+1], vaccine_scenarios[[scenario]][["dates"]][1]))-1,
@@ -46,13 +53,10 @@ for(scenario in target_scenarios){
          }
          if(location == "UK"){
             demography_input <- demography_UK[,(i+1)]
-            target_coverage <-  vaccine_scenarios[[scenario]][["coverage"]][i,2:15]
+            target_coverage <-  vaccine_scenarios[[scenario]][["coverage"]][i,2:22]
          }
-
          # Input the relevant coverage
-         new_coverage = change_coverage(matrix(rep(0,num_age_groups*3*length(dates)), 
-                                               ncol = num_age_groups*3),
-                                        target_coverage)
+         new_coverage <-  sweep(coverage_timing, 2, target_coverage, "*")
          # Udpate the vaccination calendar with the new inputs
          calendar_input = as_vaccination_calendar(efficacy = c(efficacy[,(i*2)-1]),
                                             dates = as.Date(dates),
@@ -233,17 +237,16 @@ vaccination_ratio_store3$age_group <- factor(vaccination_ratio_store3$age_group,
 ))
 
 
-vaccination_ratio_store3[Vacc_scenario == target_scenarios[1], scenario_nice := "NO_V"]
-vaccination_ratio_store3[Vacc_scenario == target_scenarios[2], scenario_nice := "CU_V"]
-vaccination_ratio_store3[Vacc_scenario == target_scenarios[3], scenario_nice := "IM_V"]
-vaccination_ratio_store3[Vacc_scenario == target_scenarios[4], scenario_nice := "IE_V"]
-vaccination_ratio_store3[Vacc_scenario == target_scenarios[5], scenario_nice := "IB_V"]
-vaccination_ratio_store3[Vacc_scenario == target_scenarios[6], scenario_nice := "U_V"]
+vaccination_ratio_store3[Vacc_scenario == target_scenarios[1], scenario_nice := vaccine_scenario_names[1]]
+vaccination_ratio_store3[Vacc_scenario == target_scenarios[2], scenario_nice := vaccine_scenario_names[2]]
+vaccination_ratio_store3[Vacc_scenario == target_scenarios[3], scenario_nice := vaccine_scenario_names[3]]
+vaccination_ratio_store3[Vacc_scenario == target_scenarios[4], scenario_nice := vaccine_scenario_names[4]]
+vaccination_ratio_store3[Vacc_scenario == target_scenarios[5], scenario_nice := vaccine_scenario_names[5]]
+vaccination_ratio_store3[Vacc_scenario == target_scenarios[6], scenario_nice := vaccine_scenario_names[6]]
 
 
-vaccination_ratio_store3$scenario_nice <- factor(vaccination_ratio_store3$scenario_nice, levels = c(
-   "NO_V", "CU_V", "IM_V","IE_V", "IB_V", "U_V"
-))
+vaccination_ratio_store3$scenario_nice <- factor(vaccination_ratio_store3$scenario_nice, 
+                                                 levels = vaccine_scenario_names )
 
 
 if(no_risk_groups == 1){
@@ -274,16 +277,55 @@ plot_subset$Date <- as.Date(plot_subset$Date, origin = "1970-01-01")
  tiff(here::here(paste0(name_run,"_immunity.tiff")), height = 2000, width = 3000, res = 300)
  IMMUNITY
  dev.off()
-
+ 
+ 
+ tester <- plot_subset
+tester <- tester[virus_type == "AH1N1"]
+tester2 <- dcast.data.table(tester, Vacc_scenario  + week + week_all + Date + age_group + scenario_nice ~ risk_group, 
+      value.var = "total_vacc")
+tester2[, Total_vacc := Risk_group1 + Risk_group2]
+tester2[,vacc_at_week := Total_vacc - shift(Total_vacc, type = "lag", n=1L), by = c("Vacc_scenario", "age_group")]
+tester2[vacc_at_week <0, vacc_at_week :=0]
 # plot the percentage of whole population administered a vaccine over the year
-ggplot(plot_subset, aes(x = Date, y = total_vacc, colour = age_group)) + 
+VACC_GIVEN_STANDARD <- ggplot(tester2, aes(x = Date, y = vacc_at_week/100000, colour = age_group)) + 
    geom_line() + 
-   facet_grid(Vacc_scenario~risk_group) + theme_linedraw() + 
-   labs(x = "week of year", y = "Number of vaccinations in year (April - April)") + 
+   facet_grid(.~scenario_nice) + theme_linedraw() + 
+   labs(x = "week of year", y = "Weekly number of vaccinations given (100'000s)", colour = "Age group") + 
    theme(axis.title = element_text(size = 12), 
-         axis.text = element_text(size = 12))
+         axis.text = element_text(size = 12), 
+         strip.background = element_rect(fill = "azure4"))
 
 total_vaccines[, Date := as.Date(Date, origin = "1970-01-01")]
 save(total_vaccines, file = here::here( "UK_output", paste0("Vaccine_model_output_",name_run,".Rdata")))
 
+one_set <- plot_subset[virus_type == "AH1N1",]
 
+temp <- one_set[, sum(total_vacc), by = c("scenario_nice", "age_group", "risk_group", "Year")]
+
+one_set[,cumulative := cumsum(total_vacc), by = c("Vacc_scenario", "age_group", "risk_group")]
+
+one_set_c <- dcast.data.table(one_set, Vacc_scenario + week + week_all + age_group + scenario_nice + Date ~ risk_group,
+                              value.var = "cumulative")
+one_set_c[, Vaccinations := Risk_group1 + Risk_group2]
+
+temp_c <- dcast.data.table(temp, scenario_nice + Year + age_group + scenario_nice  ~ risk_group,
+                           value.var = "V1")
+temp_c[, Vaccinations := Risk_group1 + Risk_group2]
+
+VACCS_GIVEN <- ggplot(temp_c, aes(x = Year, y =Vaccinations/1000000, fill = age_group, group = age_group)) + 
+   geom_bar(stat="identity") + 
+   facet_grid(. ~ scenario_nice) + 
+   theme_linedraw() + 
+   labs(y = "Yearly vaccinations given (in millions)", fill = "Age group")+
+theme(axis.title = element_text(size = 12), 
+      axis.text = element_text(size = 12), 
+      strip.background = element_rect(fill = "azure4"))
+
+VACCS_GIVEN2 <- ggplot(one_set_c, aes(x = Date, y =Vaccinations/1000000, colour = age_group, group = age_group)) + 
+   geom_line() + 
+   facet_grid(. ~ scenario_nice) + 
+   theme_linedraw() + 
+   labs(y = "Yearly vaccinations given (in millions)", colour = "Age group")+
+   theme(axis.title = element_text(size = 12), 
+         axis.text = element_text(size = 12), 
+         strip.background = element_rect(fill = "azure4"))

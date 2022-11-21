@@ -1,16 +1,17 @@
 # Epidemic  Model 
 
 # set up storage system
-storage_data <- data.frame()
+
 ascertainment_H3 <- data.frame()
 ascertainment_H1 <- data.frame()
 ascertainment_B <- data.frame()
-parameter_store <- data.frame()
+parameter_store <- list()
 
 annual_change <- 0.1
+storage_counter <- 0
+storage_prop <- data.table(matrix(ncol=11 ))
+storage_data <- list()
 
-storage_prop <- data.table(matrix(ncol=11
-                                  ))
 colnames(storage_prop) <- c("scenario", "sample", "variable", "epidemic", "V1", "base_case_value", "pop", "prop_change","f_type", "year", "annual_change")
 for(epidemic in 1:length(epidemics_list)){
   print(epidemic)
@@ -52,7 +53,7 @@ for(epidemic in 1:length(epidemics_list)){
   } else{stop("Unknown location! SHould be Kenya or UK")}
   
   posterior_subset[,"epidemic"] <- epidemic
-  parameter_store <- rbind(parameter_store, posterior_subset)
+  parameter_store[[epidemic]] <- posterior_subset
   
   #print progress
   
@@ -66,8 +67,9 @@ for(epidemic in 1:length(epidemics_list)){
   } else {stop("NOT A VAILD FLU TYPE")}
   
   #by scenario
+
   for(scenario in target_scenarios){
-    
+    storage_counter <- storage_counter + 1
     target_week <- date2ISOweek(begin_date)
     target_week <- substring(target_week,1, nchar(target_week)-2)
     # extract the relevant immunity
@@ -103,21 +105,16 @@ for(epidemic in 1:length(epidemics_list)){
                                                         previous_summary = previous_summary[f_type == flu_type])
 
     # format the output
+    
     storage_temp <- rbindlist(epidemic_infections, idcol = "sample")
     storage_temp$epidemic = epidemic
     storage_temp$scenario = scenario
     # store the epidemic model output
-    if(epidemic ==1 & scenario ==1){
-      storage_data <- storage_temp
-    } else {
-      storage_data <- rbind(storage_data, storage_temp)
-
-    }
-
+    storage_data[[storage_counter]] <- storage_temp
     #  infections in the previous epidemic
-    columns_to_sum <- colnames(storage_data)[c(1:((num_age_groups)*3)+2)]
+    columns_to_sum <- colnames(storage_data[[storage_counter]])[c(1:((num_age_groups)*3)+2)]
     epi <- epidemic
-    current_summary <- storage_data[epidemic==epi,]
+    current_summary <- storage_data[[storage_counter]][epidemic==epi,]
    # current_summary[,total_cases := NULL]
     # format
     # current_summary <- current_summary[,-2]
@@ -165,6 +162,7 @@ for(epidemic in 1:length(epidemics_list)){
 # ascertainment_B <- readRDS(file = here("output", "ascertainment_B.RDS"))
 
 # format for plotting
+storage_data <- rbindlist(storage_data)
 storage_data[,total_cases := 0]
 for(i in 1:length(columns_to_sum)){
   storage_data[,total_cases := total_cases +get(columns_to_sum[i])]
@@ -211,13 +209,32 @@ ghml <- ghm[epidemic==1]
 ghm_m <- melt.data.table(ghml, id.vars = c("sample",  "epidemic", "scenario", "Date",
                                "Virus"), measure.vars = c(columns_to_sum))
   #ghm_m <- ghm_m[sample %in% set_of_sampels]
-ggplot(ghm_m,aes(x = Date, y = value,
+
+for_vaccination <- dcast.data.table(ghm_m, sample + epidemic + scenario + Date + Virus ~ variable,
+                         value.var = "value")
+for_vaccination[, Age1 := X1 + X8 + X15]
+for_vaccination[, Age2 := X2 + X9 + X16]
+for_vaccination[, Age3 := X3 + X10 + X17]
+for_vaccination[, Age4 := X4 + X11 + X18]
+for_vaccination[, Age5 := X5 + X12 + X19]
+for_vaccination[, Age6 := X6 + X13 + X20]
+for_vaccination[, Age7 := X7 + X14 + X21]
+for_vaccination[, c("X1", "X2", "X3", "X4", "X5", "X6", 
+                    "X7", "X8", "X9", "X10", "X11", "X12", 
+                    "X13", "X14", "X15", "X16", "X17", "X18", 
+                    "X19", "X20", "X21") := NULL]
+
+for_vaccination_m <- melt.data.table(for_vaccination, id.vars = c("sample", "epidemic", "scenario", 
+                                               "Date", "Virus"))
+
+
+ggplot(for_vaccination_m[scenario==1],aes(x = Date, y = value,
                                  colour = scenario,
                                  group =sample)) +
   geom_path(alpha = 0.5) +
   facet_grid(variable~scenario, scales = "free_y") +
   theme_linedraw() +
-  labs(x = "Date", y = "Total cases", title = paste0("Epidemic 3")) +
+  labs(x = "Date", y = "Total cases", title = paste0("1995 H3N2")) +
   theme(axis.title = element_text(size = 12),
         axis.text = element_text(size = 12)) +
   geom_vline(xintercept = as.Date("2013-12-12"), alpha = 0.4)
@@ -249,7 +266,7 @@ ggplot(ghm_m,aes(x = Date, y = value,
 # extract_age <- "V4"
 # extract_scenario <- 122
 # colnames(storage_prop) <- c("sample", "scenario", "epidemic", "type", "V1", 
-#                             "V2","V3", "V4","V5", "V6", "system", "virus")
+                       #     "V2","V3", "V4","V5", "V6", "system", "virus")
 # storage_prop <- data.table(storage_prop)
 # to_plot <- data.table(melt(storage_prop, id.vars = c("sample", "scenario",
 #                                                      "epidemic", "type", "system","virus")))

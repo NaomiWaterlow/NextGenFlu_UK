@@ -159,21 +159,21 @@ UK_coverage_new[,6] <- 0
 # low risk 45-64
 UK_coverage_new[,7] <- 0.352 * (15/20)
 # low risk 65+
-UK_coverage_new[,8] <- 0.725
+UK_coverage_new[,8] <- 0.724
 # high risk under 1
-UK_coverage_new[,9] <- 0.45
+UK_coverage_new[,9] <- 0.449
 # high risk 1 - 4
-UK_coverage_new[,10] <- 0.45
+UK_coverage_new[,10] <- 0.449
 # high risk 5-14
-UK_coverage_new[,11] <- 0.45
+UK_coverage_new[,11] <- 0.449
 # high risk 15-2
-UK_coverage_new[,12] <- 0.45
+UK_coverage_new[,12] <- 0.449
 # high risk 25-4
-UK_coverage_new[,13] <- 0.45
+UK_coverage_new[,13] <- 0.449
 # high risk 45-64
-UK_coverage_new[,14] <- 0.45
+UK_coverage_new[,14] <- 0.449
 # high risk 65+
-UK_coverage_new[,15] <- 0.725
+UK_coverage_new[,15] <- 0.724
 
 ### efficaciess (age depedndent)
 match_efficacy <- rep(c(rep(0.7,6),0.46),3)
@@ -249,7 +249,7 @@ vaccine_scenarios <- list(
     efficacy_H3 = efficacy_H3_copy, 
     efficacy_H1 = efficacy_H1_copy, 
     efficacy_B = efficacy_B_copy, 
-    dates = c("-09-01", "-12-31"),
+    dates = c("-09-01", "-02-28"),
     coverage = UK_coverage,#test, 
     prop_group_vacc = rep(1,num_age_groups)
   ), 
@@ -259,7 +259,7 @@ vaccine_scenarios <- list(
     efficacy_H3 = bad_efficacy_H3_copy, 
     efficacy_H1 = bad_efficacy_H1_copy, 
     efficacy_B = bad_efficacy_B_copy, 
-    dates = c("-09-01", "-12-31"),
+    dates = c("-09-01", "-02-28"),
     coverage = UK_coverage_new,#test, 
     prop_group_vacc = rep(1,num_age_groups)
   ), 
@@ -269,7 +269,7 @@ vaccine_scenarios <- list(
     efficacy_H3 = bad_efficacy_H3_copy, 
     efficacy_H1 = efficacy_H3_copy, 
     efficacy_B = efficacy_B_copy, 
-    dates = c("-09-01", "-12-31"),
+    dates = c("-09-01", "-02-28"),
     coverage = UK_coverage_new,#test, 
     prop_group_vacc = rep(1,num_age_groups)
   ), 
@@ -279,7 +279,7 @@ vaccine_scenarios <- list(
     efficacy_H3 = im_efficacy_H3_copy, 
     efficacy_H1 = im_efficacy_H1_copy, 
     efficacy_B = im_efficacy_B_copy, 
-    dates = c("-09-01", "-12-31"),
+    dates = c("-09-01", "-02-28"),
     coverage = UK_coverage_new,#test, 
     prop_group_vacc = c(1,0.5,0.5,0.5,0.5,0.5,0.5)
   ), 
@@ -289,7 +289,7 @@ vaccine_scenarios <- list(
     efficacy_H3 = im_breadth_H3_copy, 
     efficacy_H1 = im_breadth_H1_copy, 
     efficacy_B = im_breadth_B_copy, 
-    dates = c("-09-01", "-12-31"),
+    dates = c("-09-01", "-02-28"),
     coverage = UK_coverage_new,#test, 
     prop_group_vacc = c(1,rep(1/3, 6))
   ), 
@@ -299,7 +299,7 @@ vaccine_scenarios <- list(
     efficacy_H3 = universal_H3_copy, 
     efficacy_H1 = universal_H1_copy, 
     efficacy_B = universal_B_copy, 
-    dates = c("-09-01", "-12-31"),
+    dates = c("-09-01", "-02-28"),
     coverage = UK_coverage_new,#test, 
     prop_group_vacc = c(1,rep(1/5, 6))
   )
@@ -418,3 +418,5 @@ vaccine_scenarios <- list(
  lookup_year <- names(B_matches)
 # 
 # 
+
+ 

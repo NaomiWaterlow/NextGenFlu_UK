@@ -10,6 +10,7 @@ library(fluEvidenceSynthesis)
 library(plyr)
 library(reshape2)
 library(ISOweek)
+library(qs)
 
 ###### VACCINATION MODEL ######
 # the vaccination list will have been loaded from the specifications sheet
@@ -26,7 +27,7 @@ source(here::here("Vacc_epi_model","2_1b_model_epidemic_yearcross.R"))
 # Run the vaccination model for different epidemics and vaccine scenarios
 source(here::here("Vacc_epi_model","2_2_Epidemic_Model.R"))
 
-
+source(here::here("Vacc_epi_model", "4_0_UK_results.R"))
 ###### COMINE AND PLOT #######
 
 

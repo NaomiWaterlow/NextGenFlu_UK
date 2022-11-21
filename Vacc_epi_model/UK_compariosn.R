@@ -1,6 +1,7 @@
 # rerun the fluevidence synthesis Baguelin fits. 
 # for comparison with those in the adapted model. 
-
+library(grid)
+library(gridExtra)
 # read in the data from the table
 # for each peak want 3 criteria:
   # - peak height
@@ -75,35 +76,36 @@ colnames(asc_sub_m)[4] <- "variable2"
 # age groups 0-14 year
 # old, 15-44 year old and 65+ year old.
 # link which age groups have which reporting
-ghm_m[variable == "V1", reporting_rate := 1]
-ghm_m[variable == "V2", reporting_rate := 1]
-ghm_m[variable == "V3", reporting_rate := 1]
-ghm_m[variable == "V4", reporting_rate := 2]
-ghm_m[variable == "V5", reporting_rate := 2]
-ghm_m[variable == "V6", reporting_rate := 2]
-ghm_m[variable == "V7", reporting_rate := 3]
-ghm_m[reporting_rate == 1, variable2 := "V1"]
-ghm_m[reporting_rate == 2, variable2 := "V2"]
-ghm_m[reporting_rate == 3, variable2 := "V3"]
+for_vaccination_m <- for_vaccination_m[scenario ==1,]
+for_vaccination_m[variable == "Age1", reporting_rate := 1]
+for_vaccination_m[variable == "Age2", reporting_rate := 1]
+for_vaccination_m[variable == "Age3", reporting_rate := 1]
+for_vaccination_m[variable == "Age4", reporting_rate := 2]
+for_vaccination_m[variable == "Age5", reporting_rate := 2]
+for_vaccination_m[variable == "Age6", reporting_rate := 2]
+for_vaccination_m[variable == "Age7", reporting_rate := 3]
+for_vaccination_m[reporting_rate == 1, variable2 := "V1"]
+for_vaccination_m[reporting_rate == 2, variable2 := "V2"]
+for_vaccination_m[reporting_rate == 3, variable2 := "V3"]
 
-ghm_m[asc_sub_m, on= c("sample", "variable2"), asc := i.value ]
+for_vaccination_m[asc_sub_m, on= c("sample", "variable2"), asc := i.value ]
 # for(i in 1:nrow(ghm_m)){
 #   
 #   ghm_m[i,"reported"] <- rbinom(n=1, size = as.numeric(round(ghm_m[i,"value"])), prob = as.numeric(ghm_m[i,"asc"]))
 # }
-ghm_m[,reported := value*asc ]
+for_vaccination_m[,reported := value*asc ]
 
 # which age groups are combined?
 # 1 and 2 | 4 and 5
-ghm_m[variable =="V1", final_grouping := 1]
-ghm_m[variable =="V2", final_grouping := 1]
-ghm_m[variable =="V3", final_grouping := 2]
-ghm_m[variable =="V4", final_grouping := 3]
-ghm_m[variable =="V5", final_grouping := 3]
-ghm_m[variable =="V6", final_grouping := 4]
-ghm_m[variable =="V7", final_grouping := 5]
+for_vaccination_m[variable =="Age1", final_grouping := 1]
+for_vaccination_m[variable =="Age2", final_grouping := 1]
+for_vaccination_m[variable =="Age3", final_grouping := 2]
+for_vaccination_m[variable =="Age4", final_grouping := 3]
+for_vaccination_m[variable =="Age5", final_grouping := 3]
+for_vaccination_m[variable =="Age6", final_grouping := 4]
+for_vaccination_m[variable =="Age7", final_grouping := 5]
 
-over_time <- ghm_m[,sum(reported), by =c('sample', "Date","final_grouping" )]
+over_time <- for_vaccination_m[,sum(reported), by =c('sample',"Date","final_grouping" )]
 over_time[, week_year := paste0(ISOweek(Date))]
 over_time_week <- over_time[,sum(V1), by = c("sample", "final_grouping", "week_year")]
 over_time_mean <- over_time_week[,mean(V1), by =c("final_grouping", "week_year")]
@@ -114,8 +116,35 @@ over_time_min <- over_time_week[,min(V1), by =c("final_grouping", "week_year")]
 compare_height <- over_time_min[, max(V1)/100, by = "final_grouping"]# as extracted data is in 100s
 compare_height$mean <- over_time_mean[, max(V1)/100, by = "final_grouping"]$V1# as extracted data is in 100
 compare_height$upper <- over_time_max[, max(V1)/100, by = "final_grouping"]$V1# as extracted data is in 100
+colnames(compare_height) <- c("age", "Lower", "Median", "Upper")
 compare_height
 extracted_data[,c("age", "peak_height")] 
+extracted_data$age <- as.numeric(extracted_data$age)
+compare_height[extracted_data, on = "age", Baguelin := peak_height ]
+compare_height[age == 1, Age := "0 - 4 y"]
+compare_height[age == 2, Age := "5 - 14 y"]
+compare_height[age == 3, Age := "15 - 44 y"]
+compare_height[age == 4, Age := "45 - 64 y"]
+compare_height[age == 5, Age := "65+ y"]
+
+compare_height[, age := NULL]
+
+compare_height <- compare_height[,c(5,4,2,1,3)]
+compare_height[,2:5] <- round(compare_height[,2:5])
+
+
+table_test <- tableGrob(compare_height, rows = NULL)
+table_title <- textGrob("B:", gp = gpar(fontsize = 15))
+padding <- unit(5, "mm")
+ table_here <- gtable_add_rows(
+   table_test, 
+   heights = grobHeight(table_title) + padding, 
+   pos= 0
+ )
+ table_here <- gtable_add_grob(table_here, 
+                               table_title,
+                              t =1, l = 1, 
+                              b = 1, r = 1)
 
 # compare peak week
 over_time_mean[ V1 %in% over_time_mean[, max(V1), by = "final_grouping"]$V1]
@@ -142,13 +171,36 @@ over_time_week[, p0.75 := quantile(V1, probs =0.75), by=c("Date", "final_groupin
 over_time_week[, p0.025 := quantile(V1, probs = 0.025), by=c("Date", "final_grouping")]
 over_time_week[, p0.975 := quantile(V1, probs =0.975), by=c("Date", "final_grouping")]
 
-ggplot(over_time_week, aes(x = Date, y = median/100, group = sample)) + 
 
+over_time_week[final_grouping == 1, Age := "0 - 4 y"]
+over_time_week[final_grouping == 2, Age := "5 - 14 y"]
+over_time_week[final_grouping == 3, Age := "15 - 44 y"]
+over_time_week[final_grouping == 4, Age := "45 - 64 y"]
+over_time_week[final_grouping == 5, Age := "65+ y"]
+
+over_time_week$Age <- factor(over_time_week$Age, 
+                                        levels = c("0 - 4 y","5 - 14 y"
+                                        ,"15 - 44 y","45 - 64 y","65+ y"))
+
+
+COMP_PLOT <- ggplot(over_time_week, aes(x = Date, y = median/100, group = sample)) + 
   geom_ribbon(aes(ymin = p0.025/100, ymax = p0.975/100), alpha =0.05, fill = "purple") +
   geom_ribbon(aes(ymin = p0.25/100, ymax = p0.75/100), alpha =0.5, fill = "purple") + 
   geom_line() + 
-  facet_grid(final_grouping~., scale="free_y") + 
-  theme_linedraw()
+  facet_grid(Age~., scale="free_y") + 
+  theme_linedraw() + 
+  lims(x = c(as.Date("1995-08-28"),as.Date("1996-06-01") )) + 
+  labs(y = "Number of positive ILI cases (in hundreds)", title = "A: 1995 H3N2") 
+
+tiff(filename = "1995AH3N2.tiff", height = 2000, width = 3000, res = 300)
+
+grid.arrange(COMP_PLOT, table_here, layout_matrix = rbind(c(1,1,1,2,2), 
+                                                          c(1,1,1,2,2)))
+
+dev.off()
+
+
+
 
 
 posterior_subset$sample <- c(1:100)

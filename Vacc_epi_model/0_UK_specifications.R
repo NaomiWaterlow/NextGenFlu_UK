@@ -8,15 +8,18 @@ library(tidyverse)
 
 ####### VARIABLES #####
 location <- "UK"
-posterior_sample_size <- 10
+posterior_sample_size <- 1000
 set.seed(100)
 target_scenarios <- c(1,2,3,4,5,6) # change to required
-
+base_scenario_to_use <- 2 # for the economics
+vacc_delivery_price <- 15.85 # for the economics. 
+discount_rate <- 0.035
+qaly_discount_rate <- 0.015
 use_presampled <- F # this is always false for UK - as only have 1000 samples of each
 save_samples <- F # this is always false for UK - as only have 1000 samples of each
 change_susceptibility_switch <- "OFF" # whether to take account reduction of infection from previous year
 name_run <- "default"
-
+create_plots <- "Yes"
 
 num_parameters_posteriors <- 9
 transmisibility_location <- 5 # position in posterior of the transmissibility parameter
@@ -50,9 +53,9 @@ risk_group_labels <- data.frame(id =c(1:21),
                                label =c(rep("Risk_group1",num_age_groups),
                                rep("Risk_group2",num_age_groups),
                                rep("Risk_group3",num_age_groups)))
-vaccine_scenario_names <- c("seasonal","seasonal with children","Improved (minimal)","Improved (efficacy)","Improved (breadth)",
+vaccine_scenario_names <- c("Seasonal (Baguelin)","Seasonal (current)","Improved (minimal)","Improved (efficacy)","Improved (breadth)",
 "Universal")
-create_plots <- "No"
+
 
 ##### SOURCE AND RUN ######Í
 
