@@ -2,7 +2,7 @@
 .Rhistory
 .Rapp.history
 .DS_store
-.tiff
+*.tiff
 
 # Session Data files
 
