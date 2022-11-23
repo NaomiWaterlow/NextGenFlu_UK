@@ -120,7 +120,6 @@ infectionODEs_epidemic_yearcross <- function(population_stratified,
 
       previous_summary[, actual_change := prop_change]
       susc_change = unlist(previous_summary[sample==unique(previous_summary$sample)[sample_counter],"actual_change"])
-
     } else {susc_change = 0}
     # work out the appropiate susceptibility
     
@@ -134,7 +133,7 @@ infectionODEs_epidemic_yearcross <- function(population_stratified,
   
   if(change_susceptibility_switch == "FIXED_REDUCTION" & 
      reduce_susceptibility == T){
-    susceptibility[1:2] = susceptibility[1:2]*1.2
+    susceptibility = susceptibility*1.2
   }
   # alter the exxesive calues to be within reasn
   susceptibility[which(is.na(susceptibility))] <- 0

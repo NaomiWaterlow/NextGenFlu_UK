@@ -1,7 +1,7 @@
 # UK look at results
 
 library(cowplot)
-
+n_samples <- posterior_sample_size
 total_cases_time[scenario ==1, scenario_nice := vaccine_scenario_names[1]]
 total_cases_time[scenario ==2, scenario_nice := vaccine_scenario_names[2]]
 total_cases_time[scenario ==3, scenario_nice := vaccine_scenario_names[3]]
@@ -46,7 +46,7 @@ SUMMARY <- ggplot(summary_table2, aes(x = as.Date(Date, origin = "1970-01-01")))
   facet_grid(.~scenario_nice) + 
   theme_bw() +
   scale_fill_manual(values = c("#d73027","orange1", "#91CF60", "#92C5DE", "#3288BD","purple" )) +
-  labs(x = "Date", y = "Cumulative Infections (in millions)", fill = "Vaccine", title = "A") + 
+  labs(x = "Date", y = "Cumulative Infections (in millions)", fill = "Vaccine", title = "a") + 
   theme(axis.title = element_text(size = 12), 
         axis.text = element_text(size = 11), 
         strip.text = element_text(size = 12), 
@@ -97,9 +97,11 @@ summary_for_text[ ,percent_reduc := round(((base_total - V1) / base_total)*100, 
 print("% of infections averted")
 print(summary_for_text[, quantile(percent_reduc, probs = c(0.025, 0.5, 0.975)), by = c("scenario_nice")])
 
-total_vacc <- one_set_c[, max(Vaccinations), by = "Vacc_scenario"]
+temp_c[is.na(Vaccinations), Vaccinations := 0]
+total_vacc <- temp_c[, sum(Vaccinations), by = "Vacc_scenario"]
+
 print("total vaccines given (millions)")
-print(total_vacc/1000000)
+print(total_vacc$V1/1000000)
 print(paste0("ratio of scenarios 4 and 6 is ", total_vacc[4,"V1"]/
                total_vacc[6,"V1"]))
 

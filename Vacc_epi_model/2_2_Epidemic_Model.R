@@ -83,13 +83,13 @@ for(epidemic in 1:length(epidemics_list)){
     previous_summary <- storage_prop[scenario == scen]
     # add a time since epidemic column
     previous_summary[,time_since := year_in_question- year]
+  
     # if not (no vaccine or current vaccine)
     # note down for later use
     if(change_susceptibility_switch == "FIXED_REDUCTION" &
-       scenario != target_scenarios[1 ]& !is.na(previous_epidemic)){
+       (scenario != target_scenarios[c(1) ]) & !is.na(previous_epidemic)){
       reduce_susceptibility <- T
     } else {reduce_susceptibility <- F}
-    
     
     epidemic_infections <- run_epidemic_model_yearcross(vaccine_scenarios,
                                                         year_in_question,
@@ -205,7 +205,7 @@ ghm$sample <- as.factor(ghm$sample)
 ghm$scenario <- as.factor(ghm$scenario)
 ghm$epidemic <- as.factor(ghm$epidemic)
 ghm <- as.data.table(ghm)
-ghml <- ghm[epidemic==1]
+ghml <- ghm[epidemic==25]
 ghm_m <- melt.data.table(ghml, id.vars = c("sample",  "epidemic", "scenario", "Date",
                                "Virus"), measure.vars = c(columns_to_sum))
   #ghm_m <- ghm_m[sample %in% set_of_sampels]

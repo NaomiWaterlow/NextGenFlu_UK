@@ -24,11 +24,11 @@
 # 1995 from the PPSRU reports. Index at 1995 was 166, and at 2008 was 267
 
 
-if(base_scenario_to_use == 2){
+if(base_scenario_to_use >1 ){
   inflator <- 1+(267-166)/166
 } else if (base_scenario_to_use == 1){
   inflater <- 1
-} else {"Not a valid base scenario"}
+} 
 ####### Annual outcomes ######
 
 # sum across years 
@@ -235,16 +235,16 @@ mid_summary$death <- outcomes_c[, sum(f_death), by = c("sample", "scenario")]$V1
 
 mid_summary_m <- melt(mid_summary, id.vars = c("sample", "scenario"))
 
-ggplot(mid_summary_m, aes(x = scenario, y = value, fill = variable)) +
-  geom_bar(stat = "identity") +
-  theme_linedraw() 
-
-ggplot(mid_summary_m, aes(x = scenario, y = value, fill = scenario)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  facet_grid(variable ~ ., scales = "free_y") + 
-  theme_linedraw() 
-
-ggplot(outcomes_c, aes(x = scenario, y = f_mild)) + geom_jitter() + facet_grid(age~.)
+# ggplot(mid_summary_m, aes(x = scenario, y = value, fill = variable)) +
+#   geom_bar(stat = "identity") +
+#   theme_linedraw() 
+# 
+# ggplot(mid_summary_m, aes(x = scenario, y = value, fill = scenario)) +
+#   geom_bar(stat = "identity", position = "dodge") +
+#   facet_grid(variable ~ ., scales = "free_y") + 
+#   theme_linedraw() 
+# 
+# ggplot(outcomes_c, aes(x = scenario, y = f_mild)) + geom_jitter() + facet_grid(age~.)
 
 outcomes_m <- melt.data.table(outcomes_c, id.vars= c("sample", "scenario", "Year", "Virus",
                                           "variable", "age", "risk"), 
@@ -377,17 +377,12 @@ costs_multiplier_gp <- rlnorm(n_samples,
  annual_costs <-  annual_nondeath_outcomes[,sum(costs), by = c("sample", "scenario", "Year")]
  colnames(annual_costs)[4] <- "outcome_costs"
  # now need the vaccination costs
- total_vaccines[, Year := year(Date)]
- total_vaccines[,Date := NULL]
- annual_vaccines <- total_vaccines[,lapply(.SD, sum), by = c("Scenario", "Year")]
- 
- annual_vaccines[,c("Vaccinated21", "Vaccinated20", "Vaccinated19", "Vaccinated18",
-                    "Vaccinated17", "Vaccinated16", "Vaccinated15") := NULL]
- colnames(annual_vaccines) <- c("scenario", "Year", rep(paste0("X", 1:14)))
- annual_vaccines$Year <- as.numeric(annual_vaccines$Year)
- annual_costs$Year <- as.numeric(as.character(annual_costs$Year))
- annual_costs$scenario <- as.numeric(as.character(annual_costs$scenario))
- annual_vaccines[, total_vaccines := X1+X2+X3+X4+X5+X6+X7+X8+X9+X10+X11+X12+X13+X14]
+ one_set_c
+ annual_vaccines <- one_set_c[,sum(Vaccinations), by = c("Vacc_scenario", "Year")]
+ colnames(annual_vaccines) <- c("scenario", "Year", "total_vaccines")
+ annual_costs$Year <- as.factor(annual_costs$Year)
+ annual_vaccines$Year <- as.factor(annual_vaccines$Year)
+ annual_vaccines$scenario <- as.factor(annual_vaccines$scenario)
  annual_costs[annual_vaccines, on = c("Year", "scenario"), vaccines_given := total_vaccines ]
  
  annual_costs[costs_vaccines, on = "sample", vacc_costs_dose := i.vacc_costs]

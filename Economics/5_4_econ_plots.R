@@ -10,24 +10,29 @@ threshold <- 20000
 
 min_vacc_cost <- function(x, sample_no, scenario_no){
   
-
+  # remove the delivery price
   delivery <- x+(9.64/inflator)
+
+  # select the csts fpr tje sample and scenario
   temp_annual_costs <- annual_costs[sample == sample_no & scenario == scenario_no]
+  # calculate the new cost of vaccination (vaccines given * total price of delivery)
   temp_annual_costs[, t_vacc_costs := vaccines_given * delivery]
+  # add the other costs
   temp_annual_costs[, t_total_costs := t_vacc_costs + outcome_costs]
-
+#discount the costs
   temp_annual_costs[, t_discounted_costs := t_total_costs*discounted_rate]
-  
+ # sum by sample and scenario
   t_sum_costs <- temp_annual_costs[, sum(t_discounted_costs), by = c("sample", "scenario")]
+ # convert to factor (scenario)  
   t_sum_costs$scenario <- factor(t_sum_costs$scenario)
-  
+  # subset the correct sample and scenario of the summary statistics (to compare to)
   temp_summary_stats <- summary_stats[sample == sample_no & scenario == scenario_no]
-  
+  # combine them based on sample and scenario
   temp_summary_stats[t_sum_costs, on = c("sample", "scenario"), t_discounted_costs := i.V1]
-  
+  # calculate the incremental costs from this compared to the base scenario (with no change in vvaccine price)
   temp_summary_stats[,t_incremental_costs := t_discounted_costs - base_costs]
+  # calculate what the INMB would be at this price
   temp_summary_stats[, t_INMB :=  ((-incremental_qalys *threshold) - t_incremental_costs)/1000000]
-
   # want the t_INMB to be 0. 
   tot_dif <- (temp_summary_stats[, sum(t_INMB)])^2
   return(tot_dif)
@@ -36,7 +41,7 @@ min_vacc_cost <- function(x, sample_no, scenario_no){
 
 vaccine_thresholds <- matrix(ncol = 3, nrow = 5*n_samples)
 
-if(base_scenario_to_use == 2){
+if(base_scenario_to_use > 1){
   
   for(scen in 2:6){
     
@@ -46,7 +51,7 @@ if(base_scenario_to_use == 2){
                              fn = min_vacc_cost,
                              method = "Brent",
                              lower = 0, 
-                             upper= 1500,
+                             upper= 2500,
                              sample_no = sam, 
                              scenario_no = scen)$par
       
@@ -80,7 +85,7 @@ print(vaccine_thresholds_c)
 vaccine_thresholds_c[,2:4] <- round(vaccine_thresholds_c[,2:4],1)
 
 table_test <- tableGrob(vaccine_thresholds_c, rows = NULL)
-table_title <- textGrob("C: Vaccine Threshold prices (£)", gp = gpar(fontsize = 12))
+table_title <- textGrob("c", gp = gpar(fontsize = 12))
 padding <- unit(5, "mm")
 table_here2 <- gtable_add_rows(
   table_test, 

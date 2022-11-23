@@ -67,6 +67,7 @@ for(scenario in target_scenarios){
          
          # work out vaccination adjustments based on what proportion of 0-5s vaccinated
          # first year vaccinate everyone
+  
          if(year_to_run != years[[1]]){
             # work out the coverage in the 1-5 age group based on which ages vaccinated
             calendar_input$calendar[,] <- sweep(calendar_input$calendar[,], 2,
@@ -287,9 +288,10 @@ tester2[, Total_vacc := Risk_group1 + Risk_group2]
 tester2[,vacc_at_week := Total_vacc - shift(Total_vacc, type = "lag", n=1L), by = c("Vacc_scenario", "age_group")]
 tester2[vacc_at_week <0, vacc_at_week :=0]
 # plot the percentage of whole population administered a vaccine over the year
-VACC_GIVEN_STANDARD <- ggplot(tester2, aes(x = Date, y = vacc_at_week/100000, colour = age_group)) + 
+VACC_GIVEN_STANDARD <- ggplot(tester2[Date < as.Date("1996-09-01") & Vacc_scenario==2], aes(x = Date, y = vacc_at_week/100000, colour = age_group)) + 
    geom_line() + 
-   facet_grid(.~scenario_nice) + theme_linedraw() + 
+   #facet_grid(.~scenario_nice) + 
+   theme_linedraw() + 
    labs(x = "week of year", y = "Weekly number of vaccinations given (100'000s)", colour = "Age group") + 
    theme(axis.title = element_text(size = 12), 
          axis.text = element_text(size = 12), 
@@ -300,32 +302,43 @@ save(total_vaccines, file = here::here( "UK_output", paste0("Vaccine_model_outpu
 
 one_set <- plot_subset[virus_type == "AH1N1",]
 
-temp <- one_set[, sum(total_vacc), by = c("scenario_nice", "age_group", "risk_group", "Year")]
+one_set[Date < as.Date("1996-09-01"), season := 1995 ]
+one_set[Date < as.Date("1997-09-01")  & Date >= as.Date("1996-09-01"), season := 1996 ]
+one_set[Date < as.Date("1998-09-01")  & Date >= as.Date("1997-09-01"), season := 1997 ]
+one_set[Date < as.Date("1999-09-01")  & Date >= as.Date("1998-09-01"), season := 1998 ]
+one_set[Date < as.Date("2000-09-01")  & Date >= as.Date("1999-09-01"), season := 1999 ]
+one_set[Date < as.Date("2001-09-01")  & Date >= as.Date("2000-09-01"), season := 2000 ]
+one_set[Date < as.Date("2002-09-01")  & Date >= as.Date("2001-09-01"), season := 2001 ]
+one_set[Date < as.Date("2003-09-01")  & Date >= as.Date("2002-09-01"), season := 2002 ]
+one_set[Date < as.Date("2004-09-01")  & Date >= as.Date("2003-09-01"), season := 2003 ]
+one_set[Date < as.Date("2005-09-01")  & Date >= as.Date("2004-09-01"), season := 2004 ]
+one_set[Date < as.Date("2006-09-01")  & Date >= as.Date("2005-09-01"), season := 2005 ]
+one_set[Date < as.Date("2007-09-01")  & Date >= as.Date("2006-09-01"), season := 2006 ]
+one_set[Date < as.Date("2008-09-01")  & Date >= as.Date("2007-09-01"), season := 2007 ]
+one_set[Date < as.Date("2009-09-01")  & Date >= as.Date("2008-09-01"), season := 2008 ]
 
-one_set[,cumulative := cumsum(total_vacc), by = c("Vacc_scenario", "age_group", "risk_group")]
+one_set[, given := total_vacc - shift(total_vacc, type = "lag", n=1L), by = c("season", "scenario_nice")]
+one_set[given < 0, given := 0]
+one_set[ is.na(given), given := 0]
 
-one_set_c <- dcast.data.table(one_set, Vacc_scenario + week + week_all + age_group + scenario_nice + Date ~ risk_group,
-                              value.var = "cumulative")
+# one_set_c uses years (as in annual) and temp uses seasons
+
+one_set_c <- dcast.data.table(one_set, Vacc_scenario + Year + age_group + scenario_nice  ~ risk_group,
+                           value.var = "given", fun.aggregate = sum)
 one_set_c[, Vaccinations := Risk_group1 + Risk_group2]
 
-temp_c <- dcast.data.table(temp, scenario_nice + Year + age_group + scenario_nice  ~ risk_group,
-                           value.var = "V1")
+temp <- one_set
+temp_c <- dcast.data.table(temp, Vacc_scenario + season + age_group + scenario_nice  ~ risk_group,
+                           value.var = "given", fun.aggregate = sum)
 temp_c[, Vaccinations := Risk_group1 + Risk_group2]
 
-VACCS_GIVEN <- ggplot(temp_c, aes(x = Year, y =Vaccinations/1000000, fill = age_group, group = age_group)) + 
+VACCS_GIVEN <- ggplot(temp_c, aes(x = season, y =Vaccinations/1000000, fill = age_group, group = age_group)) + 
    geom_bar(stat="identity") + 
    facet_grid(. ~ scenario_nice) + 
    theme_linedraw() + 
-   labs(y = "Yearly vaccinations given (in millions)", fill = "Age group")+
+   labs(y = "Yearly vaccinations given (in millions)", fill = "Age group", title = "b")+
 theme(axis.title = element_text(size = 12), 
       axis.text = element_text(size = 12), 
-      strip.background = element_rect(fill = "azure4"))
+      strip.background = element_rect(fill = "azure4"), 
+      axis.text.x = element_text(angle=-90))
 
-VACCS_GIVEN2 <- ggplot(one_set_c, aes(x = Date, y =Vaccinations/1000000, colour = age_group, group = age_group)) + 
-   geom_line() + 
-   facet_grid(. ~ scenario_nice) + 
-   theme_linedraw() + 
-   labs(y = "Yearly vaccinations given (in millions)", colour = "Age group")+
-   theme(axis.title = element_text(size = 12), 
-         axis.text = element_text(size = 12), 
-         strip.background = element_rect(fill = "azure4"))

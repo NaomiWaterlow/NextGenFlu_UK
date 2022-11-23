@@ -148,7 +148,6 @@ infectionODEs <- function(population_stratified, initial_infected, calendar_inpu
   initial_Rv_prop <- age_population_1year(population_stratified, old_proportions = initial_Rv_prop)
   #Assume that all R become susceptible again at the end of the year.
   initial_R_prop <- rep(0,no_groups)
-  
   mod <- gen_seeiir_ag_vacc_waning$new(no_groups = no_groups,
                                        pop = population_stratified, V0 = initial_vaccinated_prop,
                                        RV0 = initial_Rv_prop,
@@ -235,7 +234,6 @@ infectionODEs <- function(population_stratified, initial_infected, calendar_inpu
     VT_label <- paste0("VT",agp)
     y[, eval(Vaccinated_label) := get(VT_label)]
   }
-  
   
   y[is.na(y)] <- 0
   

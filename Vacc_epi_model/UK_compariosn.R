@@ -61,7 +61,7 @@ extracted_data[,week := ISOweek(peak_date)]
 #These are therefore my overal characteristics for the 2003-2004 season. 
 
 # This is the relvant compariosn years. 
-ghm_m
+# ghm_m<- ghm_m[sample %in% seq(1,1000,10),]
 # this is the reporting rates
 ascertainment_H3 <- data.table(ascertainment_H3)
 ascertainment_H1 <- data.table(ascertainment_H1)
@@ -130,11 +130,11 @@ compare_height[age == 5, Age := "65+ y"]
 compare_height[, age := NULL]
 
 compare_height <- compare_height[,c(5,4,2,1,3)]
-compare_height[,2:5] <- round(compare_height[,2:5])
+compare_height[,3:5] <- round(compare_height[,3:5])
 
 
 table_test <- tableGrob(compare_height, rows = NULL)
-table_title <- textGrob("B:", gp = gpar(fontsize = 15))
+table_title <- textGrob("b", gp = gpar(fontsize = 15))
 padding <- unit(5, "mm")
  table_here <- gtable_add_rows(
    table_test, 
@@ -147,8 +147,35 @@ padding <- unit(5, "mm")
                               b = 1, r = 1)
 
 # compare peak week
-over_time_mean[ V1 %in% over_time_mean[, max(V1), by = "final_grouping"]$V1]
-extracted_data[,c("age", "week")]
+peak_week_model <- over_time_mean[ V1 %in% over_time_mean[, max(V1), by = "final_grouping"]$V1]
+colnames(peak_week_model)[1:2] <- c("age", "week")
+extracted_data[, peak_week := ISOweek(peak_date)]
+peak_week_data <- extracted_data[,c("age", "peak_week")]
+peak_week_data[peak_week_model, on = "age", model_week := i.week]
+peak_week_data[age == 1, Age := "0 - 4 y"]
+peak_week_data[age == 2, Age := "5 - 14 y"]
+peak_week_data[age == 3, Age := "15 - 44 y"]
+peak_week_data[age == 4, Age := "45 - 64 y"]
+peak_week_data[age == 5, Age := "65+ y"]
+peak_week_data <- peak_week_data[,c(4,2,3)]
+colnames(peak_week_data)[2] <- "data_week"
+
+table_test2 <- tableGrob(peak_week_data, rows = NULL)
+table_title2 <- textGrob("c", gp = gpar(fontsize = 15))
+padding <- unit(5, "mm")
+table_here2 <- gtable_add_rows(
+  table_test2, 
+  heights = grobHeight(table_title2) + padding, 
+  pos= 0
+)
+table_here2 <- gtable_add_grob(table_here2, 
+                              table_title2,
+                              t =1, l = 1, 
+                              b = 1, r = 1)
+
+
+
+
 
 over_time_mean[over_time, on=c("week_year"), Date := i.Date]
 over_time_week[over_time, on=c("week_year"), Date := i.Date]
@@ -189,13 +216,13 @@ COMP_PLOT <- ggplot(over_time_week, aes(x = Date, y = median/100, group = sample
   geom_line() + 
   facet_grid(Age~., scale="free_y") + 
   theme_linedraw() + 
-  lims(x = c(as.Date("1995-08-28"),as.Date("1996-06-01") )) + 
-  labs(y = "Number of positive ILI cases (in hundreds)", title = "A: 1995 H3N2") 
+  lims(x = c(as.Date("2003-08-28"),as.Date("2004-06-01") )) + 
+  labs(y = "Number of positive ILI cases (in hundreds)", title = "a") 
 
-tiff(filename = "1995AH3N2.tiff", height = 2000, width = 3000, res = 300)
+tiff(filename = "2003AH3N2.tiff", height = 2000, width = 3000, res = 300)
 
-grid.arrange(COMP_PLOT, table_here, layout_matrix = rbind(c(1,1,1,2,2), 
-                                                          c(1,1,1,2,2)))
+grid.arrange(COMP_PLOT, table_here, table_here2, layout_matrix = rbind(c(1,1,1,2,2), 
+                                                          c(1,1,1,3,3)))
 
 dev.off()
 

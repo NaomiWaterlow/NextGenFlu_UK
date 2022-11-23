@@ -1,15 +1,15 @@
 # Discounting and combining all the economics
 
 # calculate years since base
-annual_nondeath_outcomes[,discounting_years := as.numeric(Year) - 1995]
+annual_nondeath_outcomes[,discounting_years := as.numeric(as.character(Year)) - 1995]
 annual_nondeath_outcomes[, discounted_rate := (1-qaly_discount_rate) ^ discounting_years]
 annual_nondeath_outcomes[, discounted_QALYS := QALYS*discounted_rate]
 
-annual_costs[,discounting_years := as.numeric(Year) - 1995]
+annual_costs[,discounting_years := as.numeric(as.character(Year)) - 1995]
 annual_costs[, discounted_rate := (1-discount_rate) ^ discounting_years]
 annual_costs[, discounted_costs := total_costs*discounted_rate]
 
-deaths_summarised[,discounting_years := as.numeric(Year) - 1995 ]
+deaths_summarised[,discounting_years := as.numeric(as.character(Year)) - 1995 ]
 deaths_summarised[,discounted_rate := (1-qaly_discount_rate) ^ discounting_years ]
 deaths_summarised[, discounted_QALYS := death_QALYS*discounted_rate]
 
@@ -63,13 +63,13 @@ ICERS <- ggplot(summary_stats[!(scenario %in% c(1))], aes(x = scenario_name, y =
   theme_linedraw() +
   labs(x = "Scenario", y = "ICER (Inc cost per Inc QALY gained)") + 
   scale_fill_manual(values = c("orange1", "#91CF60", "#92C5DE", "#3288BD","purple" ))
-} else if(base_scenario_to_use ==2){
+} else if(base_scenario_to_use > 1){
   ICERS <- ggplot(summary_stats[!(scenario %in% c(1,2))], aes(x = scenario_name, y = icer_gained, fill = scenario_name)) + 
     geom_boxplot() + 
     theme_linedraw() +
     labs(x = "Scenario", y = "ICER (Inc cost per Inc QALY gained)") + 
     scale_fill_manual(values = c( "#91CF60", "#92C5DE", "#3288BD","purple" ))
-} else {print("invalid base scenario")}
+} 
 
 
 # now do the threshold stuff
@@ -81,7 +81,7 @@ summary_stats[, INMB :=  ((-incremental_qalys *threshold) - incremental_costs)/1
 INMBS <- ggplot(summary_stats[scenario_name != vaccine_scenario_names[1],], aes(x = scenario_name, y = INMB, fill = scenario_name)) + 
   geom_boxplot() + 
   theme_linedraw() + 
-  labs(x = "Scenario", y = "INMB (in millions)", title="A: INMBs") + 
+  labs(x = "Scenario", y = "INMB (in millions)", title="a") + 
   scale_fill_manual(values = c("orange1", "#91CF60", "#92C5DE", "#3288BD","purple" )) + 
   theme(legend.position = "None", 
         axis.text.x = element_text(angle = -90), 
@@ -96,11 +96,11 @@ ICERS
 INMBS
 
 PLANE <- ggplot(summary_stats[!(scenario %in% c(1))], 
-       aes(x = -incremental_qalys, y = incremental_costs, colour = scenario_name)) + 
+       aes(x = -incremental_qalys/1000000, y = incremental_costs/1000000, colour = scenario_name)) + 
   geom_point() + 
   theme_linedraw() + 
-  labs(x = "Incremental QALYS gained", y = "Incremental costs", 
-       colour = "Scenario", title = "B: Cost-effectiveness plane") + 
+  labs(x = "Incremental QALYS gained (millions)", y = "Incremental costs (millions)", 
+       colour = "Scenario", title = "b") + 
   scale_colour_manual(values = c("orange1", "#91CF60", "#92C5DE", "#3288BD","purple" ))
 
 
@@ -117,7 +117,7 @@ icers <- dcast.data.table(icers, scenario~ type, value.var = "V1")
 print("icers")
 print(icers)
 
-hospitalisations <- annual_nondeath_outcomes[variable.1 == "f_hosp", quantile(V1, probs = c(0.5)), by = c("scenario") ]
+hospitalisations <- annual_nondeath_outcomes[variable.1 == "f_hosp", quantile(V1, probs = c(0.025,0.5, 0.975)), by = c("scenario") ]
 hospitalisations$type <- rep(c("lower", "median", "upper"), 6)
 hospitalisations <- dcast.data.table(hospitalisations, scenario~ type, value.var = "V1")
 print("hospitalisations")
@@ -139,23 +139,23 @@ for(i in 1:length(thresholds_to_run)){
   
   target_threshold <- thresholds_to_run[i]
   
-  summary_stats[, threshold :=  ((-incremental_qalys *target_threshold) - incremental_costs)]
+  summary_stats[, threshold_target :=  ((-incremental_qalys *target_threshold) - incremental_costs)]
   
-  summary_stats[ threshold < 0, threshold_INMB := 0]
-  summary_stats[ threshold >= 0, threshold_INMB := 1]
+  summary_stats[ threshold_target < 0, threshold_INMB := 0]
+  summary_stats[ threshold_target >= 0, threshold_INMB := 1]
   
   print(summary_stats[, sum(threshold_INMB), by = c("scenario")])
   
 }
 
 
-summary_stats[, sum(get())]
+# summary_stats[, sum(get())]
 
 
 INMBS <- ggplot(summary_stats[scenario_name != vaccine_scenario_names[1],], aes(x = scenario_name, y = INMB, fill = scenario_name)) + 
   geom_boxplot() + 
   theme_linedraw() + 
-  labs(x = "Scenario", y = "INMB (in millions)", title="A: INMBs") + 
+  labs(x = "Scenario", y = "INMB (in millions)", title="a") + 
   scale_fill_manual(values = c("orange1", "#91CF60", "#92C5DE", "#3288BD","purple" )) + 
   theme(legend.position = "None", 
         axis.text.x = element_text(angle = -90), 
