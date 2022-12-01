@@ -2,7 +2,7 @@
 
 # calculate years since base
 annual_nondeath_outcomes[,discounting_years := as.numeric(as.character(Year)) - 1995]
-annual_nondeath_outcomes[, discounted_rate := (1-qaly_discount_rate) ^ discounting_years]
+annual_nondeath_outcomes[, discounted_rate := (1+qaly_discount_rate) ^ -discounting_years]
 annual_nondeath_outcomes[, discounted_QALYS := QALYS*discounted_rate]
 
 annual_costs[,discounting_years := as.numeric(as.character(Year)) - 1995]
