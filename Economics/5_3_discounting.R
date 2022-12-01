@@ -6,11 +6,11 @@ annual_nondeath_outcomes[, discounted_rate := (1+qaly_discount_rate) ^ -discount
 annual_nondeath_outcomes[, discounted_QALYS := QALYS*discounted_rate]
 
 annual_costs[,discounting_years := as.numeric(as.character(Year)) - 1995]
-annual_costs[, discounted_rate := (1-discount_rate) ^ discounting_years]
+annual_costs[, discounted_rate := (1+discount_rate) ^ -discounting_years]
 annual_costs[, discounted_costs := total_costs*discounted_rate]
 
 deaths_summarised[,discounting_years := as.numeric(as.character(Year)) - 1995 ]
-deaths_summarised[,discounted_rate := (1-qaly_discount_rate) ^ discounting_years ]
+deaths_summarised[,discounted_rate := (1+qaly_discount_rate) ^ -discounting_years ]
 deaths_summarised[, discounted_QALYS := death_QALYS*discounted_rate]
 
 sum_QALYS <- annual_nondeath_outcomes[, sum(discounted_QALYS), by = c("sample", "scenario", "Year")]
