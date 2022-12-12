@@ -377,7 +377,7 @@ costs_multiplier_gp <- rlnorm(n_samples,
  annual_costs <-  annual_nondeath_outcomes[,sum(costs), by = c("sample", "scenario", "Year")]
  colnames(annual_costs)[4] <- "outcome_costs"
  # now need the vaccination costs
- one_set_c
+
  annual_vaccines <- one_set_c[,sum(Vaccinations), by = c("Vacc_scenario", "Year")]
  colnames(annual_vaccines) <- c("scenario", "Year", "total_vaccines")
  annual_costs$Year <- as.factor(annual_costs$Year)

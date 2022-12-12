@@ -3,10 +3,7 @@
 
 # Need the INMB to be 0. 
 
-# check that the incremental is compared to number 2 not number 1
-base_scenario_to_use
-# check the threshold value
-threshold <- 20000
+
 
 min_vacc_cost <- function(x, sample_no, scenario_no){
   
@@ -50,7 +47,7 @@ if(base_scenario_to_use > 1){
       vaccine_price <- optim(par = c(5), 
                              fn = min_vacc_cost,
                              method = "Brent",
-                             lower = 0, 
+                             lower = -1000, 
                              upper= 2500,
                              sample_no = sam, 
                              scenario_no = scen)$par

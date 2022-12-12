@@ -15,10 +15,11 @@ base_scenario_to_use <- 2 # for the economics
 vacc_delivery_price <- 15.85#20#12#15.85 # for the economics. 
 discount_rate <- 0.035
 qaly_discount_rate <- 0.015
+threshold <- 30000
 use_presampled <- F # this is always false for UK - as only have 1000 samples of each
 save_samples <- F # this is always false for UK - as only have 1000 samples of each
-change_susceptibility_switch <- "FIXED_REDUCTION" # whether to take account reduction of infection from previous year
-name_run <- "FIXED_REDUCTION"
+change_susceptibility_switch <- "OFF" # whether to take account reduction of infection from previous year
+name_run <- "higher_threshold"
 create_plots <- "Yes"
 
 num_parameters_posteriors <- 9

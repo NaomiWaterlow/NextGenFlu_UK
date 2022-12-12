@@ -74,7 +74,7 @@ ICERS <- ggplot(summary_stats[!(scenario %in% c(1))], aes(x = scenario_name, y =
 
 # now do the threshold stuff
 
-threshold <- 20000
+
 
 summary_stats[, INMB :=  ((-incremental_qalys *threshold) - incremental_costs)/1000000]
 
@@ -132,22 +132,22 @@ deathys <- dcast.data.table(deathys, scenario~ type, value.var = "V1")
 print("deaths")
 print(deathys)
 
-
-thresholds_to_run <- seq(0,100000, by = 5000)
-
-for(i in 1:length(thresholds_to_run)){
-  
-  target_threshold <- thresholds_to_run[i]
-  
-  summary_stats[, threshold_target :=  ((-incremental_qalys *target_threshold) - incremental_costs)]
-  
-  summary_stats[ threshold_target < 0, threshold_INMB := 0]
-  summary_stats[ threshold_target >= 0, threshold_INMB := 1]
-  
-  print(summary_stats[, sum(threshold_INMB), by = c("scenario")])
-  
-}
-
+# 
+# thresholds_to_run <- seq(0,100000, by = 5000)
+# 
+# for(i in 1:length(thresholds_to_run)){
+#   
+#   target_threshold <- thresholds_to_run[i]
+#   
+#   summary_stats[, threshold_target :=  ((-incremental_qalys *target_threshold) - incremental_costs)]
+#   
+#   summary_stats[ threshold_target < 0, threshold_INMB := 0]
+#   summary_stats[ threshold_target >= 0, threshold_INMB := 1]
+#   
+#   print(summary_stats[, sum(threshold_INMB), by = c("scenario")])
+#   
+# }
+# 
 
 # summary_stats[, sum(get())]
 
