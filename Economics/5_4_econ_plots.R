@@ -8,7 +8,7 @@
 min_vacc_cost <- function(x, sample_no, scenario_no){
   
   # remove the delivery price
-  delivery <- x+(9.64/inflator)
+  delivery <- x+(9.64*inflate_total)
 
   # select the csts fpr tje sample and scenario
   temp_annual_costs <- annual_costs[sample == sample_no & scenario == scenario_no]
@@ -94,13 +94,17 @@ table_here2 <- gtable_add_grob(table_here2,
                               table_title,
                               t =1, l = 1, 
                               b = 1, r = 4)
+if(name_run == "default"){length_plot = 1500} else {length_plot = 2000}
+tiff(filename = here::here(paste0(name_run,"_ECONOMICS.tiff")), height = length_plot, width = 3000, res = 300)
 
-tiff(filename = here::here(paste0(name_run,"_ECONOMICS.tiff")), height = 2000, width = 3000, res = 300)
-
-
-grid.arrange(PLANE, INMBS, table_here2, layout_matrix = rbind(c(2,2,2,1,1,1,1),
-                                                              c(2,2,2,1,1,1,1),
-                                                              c(3,3,3,3,3,3,3)))
+if(name_run == "default"){ 
+grid.arrange(PLANE, INMBS, layout_matrix = rbind(c(2,2,2,1,1,1,1),
+                                                              c(2,2,2,1,1,1,1)))
+} else {
+  grid.arrange(PLANE, INMBS, table_here2, layout_matrix = rbind(c(2,2,2,1,1,1,1),
+                                                                c(2,2,2,1,1,1,1),
+                                                                c(3,3,3,3,3,3,3)))
+}
 dev.off()
 
 

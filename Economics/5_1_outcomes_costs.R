@@ -10,25 +10,24 @@
 # - calulating annual non-death QALYs
 # - calculating annual costs
 
-# input data for defalting the healthcare costs 
-# this was for inflating to 2019
+#  inflating to 2019
 #< 2009/10- 2014/15 HCHS, 2015/16 - 2018/9 NHSCII
 # 2008/9 HCHS just taking halfway between pay and prices
-# if(base_scenario_to_use == 2){
-# inflater_years <- c(4.1, 0.6,3,2.1,1.7,1.1, 0.9,0.35, 2.13,1.16,2.31)
-# } else if (base_scenario_to_use == 1){
-#   inflater_years <- 0
-# } else {"Not a valid base scenario"}
-
+if(base_scenario_to_use == 2){
+inflater_years <- c(4.1, 0.6,3,2.1,1.7,1.1, 0.9,0.35, 2.13,1.16,2.31)
+} else if (base_scenario_to_use == 1){
+  inflater_years <- 0
+} else {"Not a valid base scenario"}
+# work out overall inflation
+inflater_years <- (inflater_years/100) + 1
+inflate_total <- prod(inflater_years)
 # this is the version for deflating
 # 1995 from the PPSRU reports. Index at 1995 was 166, and at 2008 was 267
-
-
-if(base_scenario_to_use >1 ){
-  inflator <- 1+(267-166)/166
-} else if (base_scenario_to_use == 1){
-  inflater <- 1
-} 
+# if(base_scenario_to_use >1 ){
+#   inflator <- 1+(267-166)/166
+# } else if (base_scenario_to_use == 1){
+#   inflater <- 1
+# } 
 ####### Annual outcomes ######
 
 # sum across years 
@@ -294,14 +293,14 @@ c_sd <- 192.1
 # take asmples and deflate to 1995
 costs_multiplier_hospital <- rlnorm(n_samples, 
                                mean  = lnmu(c_mean, c_sd), 
-                               sd = lnsig(c_mean, c_sd))/inflator
+                               sd = lnsig(c_mean, c_sd))*inflate_total
 
 c_mean <- 37
 c_sd <- 8.4
 # take asmples and deflate to 1995
 costs_multiplier_gp <- rlnorm(n_samples, 
                                     mean  = lnmu(c_mean, c_sd), 
-                                    sd = lnsig(c_mean, c_sd))/inflator
+                                    sd = lnsig(c_mean, c_sd))*inflate_total
 
 # for the vaccination one, change the triangular to a gamma. 
 # 
@@ -352,7 +351,7 @@ costs_multiplier_gp <- rlnorm(n_samples,
 #   plot(x,y)
 #   
   # take constnat vaccine price but deflate to 1995
-  costs_multiplier_vacc <- rep( vacc_delivery_price , n_samples )/inflator
+  costs_multiplier_vacc <- rep( vacc_delivery_price , n_samples )*inflate_total
   #rgamma(n_samples,
                              #  shape  = vacc_cost_shape,
                              #  scale = vacc_cost_scale)

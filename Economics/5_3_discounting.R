@@ -78,15 +78,21 @@ ICERS <- ggplot(summary_stats[!(scenario %in% c(1))], aes(x = scenario_name, y =
 
 summary_stats[, INMB :=  ((-incremental_qalys *threshold) - incremental_costs)/1000000]
 
-INMBS <- ggplot(summary_stats[scenario_name != vaccine_scenario_names[1],], aes(x = scenario_name, y = INMB, fill = scenario_name)) + 
+
+colours_4 <- c( "#91CF60", "#92C5DE", "#3288BD","purple" )
+colours_5 <- c("orange1", "#91CF60", "#92C5DE", "#3288BD","purple" )
+
+INMBS <- ggplot(summary_stats[!(scenario_name %in% vaccine_scenario_names[1:2]),], aes(x = scenario_name, y = INMB, fill = scenario_name)) + 
   geom_boxplot() + 
   theme_linedraw() + 
+  lims(y=c(0,max(summary_stats$INMB*1.1)))+
   labs(x = "Scenario", y = "INMB (in millions)", title="a") + 
-  scale_fill_manual(values = c("orange1", "#91CF60", "#92C5DE", "#3288BD","purple" )) + 
+  scale_fill_manual(values = colours_4) + 
   theme(legend.position = "None", 
         axis.text.x = element_text(angle = -90), 
         axis.title.x = element_blank()) + 
-  scale_x_discrete(labels = function(y) str_wrap(y, width = 10))
+  scale_x_discrete(labels = function(y) str_wrap(y, width = 10)) 
+
 
 summary_stats[, quantile(INMB, probs = c(0.025, 0.5, 0.975)), by = "scenario_name"]
 summary_stats[, quantile(icer_gained, probs = c(0.025, 0.5, 0.975), na.rm =T), by = "scenario_name"]
@@ -95,13 +101,13 @@ summary_stats[, quantile(discounted_QALYS, probs = c(0.025, 0.5, 0.975), na.rm =
 ICERS
 INMBS
 
-PLANE <- ggplot(summary_stats[!(scenario %in% c(1))], 
+PLANE <- ggplot(summary_stats[!(scenario %in% c(1,2))], 
        aes(x = -incremental_qalys/1000000, y = incremental_costs/1000000, colour = scenario_name)) + 
   geom_point() + 
   theme_linedraw() + 
   labs(x = "Incremental QALYS gained (millions)", y = "Incremental costs (millions)", 
        colour = "Scenario", title = "b") + 
-  scale_colour_manual(values = c("orange1", "#91CF60", "#92C5DE", "#3288BD","purple" ))
+  scale_colour_manual(values =colours_4 )
 
 
 
@@ -150,17 +156,17 @@ print(deathys)
 # 
 
 # summary_stats[, sum(get())]
-
-
-INMBS <- ggplot(summary_stats[scenario_name != vaccine_scenario_names[1],], aes(x = scenario_name, y = INMB, fill = scenario_name)) + 
-  geom_boxplot() + 
-  theme_linedraw() + 
-  labs(x = "Scenario", y = "INMB (in millions)", title="a") + 
-  scale_fill_manual(values = c("orange1", "#91CF60", "#92C5DE", "#3288BD","purple" )) + 
-  theme(legend.position = "None", 
-        axis.text.x = element_text(angle = -90), 
-        axis.title.x = element_blank()) + 
-  scale_x_discrete(labels = function(y) str_wrap(y, width = 10))
+# 
+# 
+# INMBS <- ggplot(summary_stats[scenario_name != vaccine_scenario_names[1],], aes(x = scenario_name, y = INMB, fill = scenario_name)) + 
+#   geom_boxplot() + 
+#   theme_linedraw() + 
+#   labs(x = "Scenario", y = "INMB (in millions)", title="a") + 
+#   scale_fill_manual(values = c("orange1", "#91CF60", "#92C5DE", "#3288BD","purple" )) + 
+#   theme(legend.position = "None", 
+#         axis.text.x = element_text(angle = -90), 
+#         axis.title.x = element_blank()) + 
+#   scale_x_discrete(labels = function(y) str_wrap(y, width = 10))
 
 
 
