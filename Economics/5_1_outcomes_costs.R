@@ -43,6 +43,7 @@ cases_sample_year[,X12 := NULL]
 
 # relabel cromer data to match
 cromer <- data.table(qread(here::here("UK_data","cromer_samples_by_age_group.qs")))
+cromer_copy <- copy(cromer)
 cromer[age_group == "[0,0.5)" & risk_group == "LowRisk", variable := "X1"]
 cromer[age_group == "[0.5,5)" & risk_group == "LowRisk", variable := "X2"]
 cromer[age_group == "[5,15)" & risk_group == "LowRisk", variable := "X3"]
@@ -389,5 +390,44 @@ costs_multiplier_gp <- rlnorm(n_samples,
  annual_costs[,vacc_costs := vaccines_given*vacc_costs_dose]
  annual_costs[,total_costs := outcome_costs + vacc_costs]
 
+ 
+ # make a plot of cromer output
+ 
+ CROMER_DEATHS <- ggplot(cromer_copy[outcome == "death" ,], aes(x = value, fill = subtype)) + 
+   geom_histogram(bins = 50) + 
+   facet_grid(risk_group~age_group, scales = "free") + 
+   theme_linedraw() + 
+   labs(x = "Proportion", title = "Deaths") + 
+   theme(axis.text.x = element_text(angle = -95, 
+                                    h = 1), 
+         axis.text.y = element_blank(), 
+         axis.title.y = element_blank(), 
+         axis.ticks.y = element_blank())
+ 
+ CROMER_GP <- ggplot(cromer_copy[outcome == "GP" ,], aes(x = value, fill = subtype)) + 
+   geom_histogram(bins = 50) + 
+   facet_grid(risk_group~age_group, scales = "free") + 
+   theme_linedraw() + 
+   labs(x = "Proportion", title = "GP visits") + 
+   theme(axis.text.x = element_text(angle = -95, 
+                                    h = 1), 
+         axis.text.y = element_blank(), 
+         axis.title.y = element_blank(), 
+         axis.ticks.y = element_blank())
+ 
+ CROMER_Hospital <- ggplot(cromer_copy[outcome == "hosp" ,], aes(x = value, fill = subtype)) + 
+   geom_histogram(bins = 50) + 
+   facet_grid(risk_group~age_group, scales = "free") + 
+   theme_linedraw() + 
+   labs(x = "Proportion", title = "Hospitalisations") + 
+   theme(axis.text.x = element_text(angle = -95, 
+                                    h = 1), 
+         axis.text.y = element_blank(), 
+         axis.title.y = element_blank(), 
+         axis.ticks.y = element_blank())
+ 
+ tiff(filename = here::here("CROMER_SAMPLES.tiff"), height = 3000, width = 3000, res = 300)
+ grid.arrange(CROMER_DEATHS, CROMER_Hospital, CROMER_GP, ncol = 1)
+ dev.off()
  
  

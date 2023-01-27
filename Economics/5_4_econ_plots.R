@@ -61,6 +61,7 @@ if(base_scenario_to_use > 1){
 vaccine_thresholds <- data.table(vaccine_thresholds)
 colnames(vaccine_thresholds) <- c("sample", "scenario", "vaccine_price")
 
+vaccine_thresholds_keeps <- copy(vaccine_thresholds)
 
 vaccine_thresholds <- vaccine_thresholds[,quantile(vaccine_price, probs = c(0.025, 0.5, 0.975)), by = c("scenario")]
 vaccine_thresholds$type <- rep(c("lower", "median", "upper"), 5)
@@ -109,6 +110,7 @@ dev.off()
 
 
 
+k30_10 <- vaccine_thresholds_keeps[,quantile(vaccine_price, probs = c(0.1)), by = c("scenario")]
 
 
 
