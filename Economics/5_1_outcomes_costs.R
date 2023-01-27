@@ -393,8 +393,8 @@ costs_multiplier_gp <- rlnorm(n_samples,
  
  # make a plot of cromer output
  
- CROMER_DEATHS <- ggplot(cromer_copy[outcome == "death" ,], aes(x = value, fill = subtype)) + 
-   geom_histogram(bins = 50) + 
+ CROMER_DEATHS <- ggplot(cromer_copy[outcome == "death" ,], aes(x = value, y = subtype, fill = subtype)) + 
+   geom_violin() + 
    facet_grid(risk_group~age_group, scales = "free") + 
    theme_linedraw() + 
    labs(x = "Proportion", title = "Deaths") + 
@@ -404,8 +404,8 @@ costs_multiplier_gp <- rlnorm(n_samples,
          axis.title.y = element_blank(), 
          axis.ticks.y = element_blank())
  
- CROMER_GP <- ggplot(cromer_copy[outcome == "GP" ,], aes(x = value, fill = subtype)) + 
-   geom_histogram(bins = 50) + 
+ CROMER_GP <- ggplot(cromer_copy[outcome == "GP" ,], aes(x = value, y= subtype, fill = subtype)) + 
+   geom_violin() + 
    facet_grid(risk_group~age_group, scales = "free") + 
    theme_linedraw() + 
    labs(x = "Proportion", title = "GP visits") + 
@@ -415,8 +415,8 @@ costs_multiplier_gp <- rlnorm(n_samples,
          axis.title.y = element_blank(), 
          axis.ticks.y = element_blank())
  
- CROMER_Hospital <- ggplot(cromer_copy[outcome == "hosp" ,], aes(x = value, fill = subtype)) + 
-   geom_histogram(bins = 50) + 
+ CROMER_Hospital <- ggplot(cromer_copy[outcome == "hosp" ,], aes(x = value,y=subtype, fill = subtype)) + 
+   geom_violin() + 
    facet_grid(risk_group~age_group, scales = "free") + 
    theme_linedraw() + 
    labs(x = "Proportion", title = "Hospitalisations") + 
