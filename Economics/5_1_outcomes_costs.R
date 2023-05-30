@@ -1,7 +1,7 @@
 #### Economic analysis - calculating the basics
 
 # load in saved epi model output file if want to run econ alone
-#load(file = here::here("UK_output", "total_cases_time.Rdata"))
+# load(file = here::here("UK_output", "total_cases_time.Rdata"))
 
 
 #### sections in this script are:
@@ -383,7 +383,7 @@ costs_multiplier_gp <- rlnorm(n_samples,
  annual_costs$Year <- as.factor(annual_costs$Year)
  annual_vaccines$Year <- as.factor(annual_vaccines$Year)
  annual_vaccines$scenario <- as.factor(annual_vaccines$scenario)
- annual_costs[annual_vaccines, on = c("Year", "scenario"), vaccines_given := total_vaccines ]
+ annual_costs[annual_vaccines, on = c("Year", "scenario",), vaccines_given := total_vaccines ]
  
  annual_costs[costs_vaccines, on = "sample", vacc_costs_dose := i.vacc_costs]
   
@@ -430,4 +430,79 @@ costs_multiplier_gp <- rlnorm(n_samples,
  grid.arrange(CROMER_DEATHS, CROMER_Hospital, CROMER_GP, ncol = 1)
  dev.off()
  
- 
+ hosps <- outcomes_c[, sum(f_hosp), by = c("sample", "scenario")]
+ hosps_2 <- hosps[scenario == 2]
+hosps[hosps_2, on=c("sample"), base := i.V1] 
+hosps[, Perc_change := round(((base - V1) / base)*100)]
+hosps[scenario %in% c(3:6)]
+max(hosps[scenario %in% c(3:6), "Perc_change"])
+min(hosps[scenario %in% c(3:6), "Perc_change"])
+
+deaths <- outcomes_c[, sum(f_death), by = c("sample", "scenario")]
+deaths_2 <- deaths[scenario == 2]
+deaths[deaths_2, on=c("sample"), base := i.V1] 
+deaths[, Perc_change := round(((base - V1) / base)*100)]
+hosps[scenario %in% c(3:6)]
+max(deaths[scenario %in% c(3:6), "Perc_change"])
+min(deaths[scenario %in% c(3:6), "Perc_change"])
+
+
+outcomes_c_m <- melt.data.table(outcomes_c, id.vars = c("sample", "scenario", "age", "Year", "Virus", "risk"),
+                measure.vars = c("f_death","f_hosp", "f_gp", "f_fever", "f_mild"))
+
+combined_outs <- outcomes_c_m[, sum(value), by = c("sample", "scenario", "age", "variable")]
+for_plotting <- combined_outs[, quantile(V1, probs = c(0.025, 0.5 ,0.975)), by = c("scenario", "age", "variable")]
+for_plotting[, quantile := rep(c("lower", "median", "upper"), (540/3))]
+for_plotting_c <- dcast.data.table(for_plotting, scenario + age + variable ~ quantile, value.var = "V1")
+
+for_plotting_c[scenario ==1, scenario_nice := vaccine_scenario_names[1]]
+for_plotting_c[scenario ==2, scenario_nice := vaccine_scenario_names[2]]
+for_plotting_c[scenario ==3, scenario_nice := vaccine_scenario_names[3]]
+for_plotting_c[scenario ==4, scenario_nice := vaccine_scenario_names[4]]
+for_plotting_c[scenario ==5, scenario_nice := vaccine_scenario_names[5]]
+for_plotting_c[scenario ==6, scenario_nice := vaccine_scenario_names[6]]
+
+for_plotting_c$scenario_nice <- factor(for_plotting_c$scenario_nice, levels = 
+                                         vaccine_scenario_names)
+for_plotting_c[variable == "f_death", variable1 := "Deaths"]
+for_plotting_c[variable == "f_hosp", variable1 := "Hospitalisations"]
+for_plotting_c[variable == "f_gp", variable1 := "GP visits"]
+for_plotting_c[variable == "f_fever", variable1 := "Fever"]
+for_plotting_c[variable == "f_mild", variable1 := "Mild Symptoms"]
+
+for_plotting_c$variable1 <- factor(for_plotting_c$variable1,
+                                   levels = c("Deaths", "Hospitalisations", "GP visits", 
+                                              "Fever", "Mild Symptoms"))
+for_plotting_c[age == "[0,0.5)", Age := "Age < 1"]
+for_plotting_c[age == "[0.5,5)", Age := "Age 1-4"]
+for_plotting_c[age == "[5,15)", Age := "Age 5-14"]
+for_plotting_c[age == "[15,45)", Age := "Age 15-44"]
+for_plotting_c[age == "[45,65)", Age := "Age 45-64"]
+for_plotting_c[age == "[65,+)", Age := "Age 65+"]
+
+for_plotting_c$Age <- factor(for_plotting_c$Age,
+                             levels = c("Age < 1","Age 1-4", "Age 5-14", 
+                                        "Age 15-44", "Age 45-64", "Age 65+"  ))
+
+OUTCOMES1 <- ggplot(for_plotting_c, aes(x = Age, y = median/1000000, fill = scenario_nice)) + 
+  geom_bar(stat="identity", position = "dodge") + 
+  facet_grid(variable1~., scale = "free_y") + 
+  theme_linedraw() + 
+  geom_errorbar(aes(ymin = lower/1000000, ymax = upper/1000000), position = "dodge") + 
+  labs(x = "Age group", y = "Total across time period (millions)", fill = "Scenario") + 
+  scale_fill_manual(values = c("#d73027","orange1", "#91CF60", "#92C5DE", "#3288BD","purple" ))
+
+OUTCOMES2 <- ggplot(for_plotting_c, aes(x = scenario_nice, y = median/1000000, fill = Age)) + 
+  geom_bar(stat="identity", position = "dodge") + 
+  facet_grid(variable1~., scale = "free_y") + 
+  theme_linedraw() + 
+  geom_errorbar(aes(ymin = lower/1000000, ymax = upper/1000000), position = "dodge") + 
+  labs(x = "Scenario", y = "Total across time period (millions)", fill = "Age group") 
+
+tiff(here::here(paste0(name_run,"_OUTCOMES1.tiff")),  width = 3250, height = 2000, res = 300, )
+OUTCOMES1
+dev.off()
+
+tiff(here::here(paste0(name_run,"_OUTCOMES2.tiff")),  width = 3250, height = 2000, res = 300, )
+OUTCOMES2
+dev.off()

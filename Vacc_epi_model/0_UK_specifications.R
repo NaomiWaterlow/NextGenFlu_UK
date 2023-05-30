@@ -19,7 +19,7 @@ threshold <- 30000
 use_presampled <- F # this is always false for UK - as only have 1000 samples of each
 save_samples <- F # this is always false for UK - as only have 1000 samples of each
 change_susceptibility_switch <- "OFF" # whether to take account reduction of infection from previous year
-name_run <- "higher_threshold"
+name_run <- "default"
 create_plots <- "Yes"
 
 num_parameters_posteriors <- 9
