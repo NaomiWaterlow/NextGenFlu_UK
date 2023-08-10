@@ -114,3 +114,12 @@ k30_10 <- vaccine_thresholds_keeps[,quantile(vaccine_price, probs = c(0.1)), by 
 
 
 
+SYMPTOMATIC <- ggplot(illness_samples, aes(x = Virus, y = illness, fill = Virus)) + geom_violin() + 
+  facet_grid(.~outcome) +
+   theme_linedraw() + 
+  labs(x = "", y = "Proportion of all infections")
+
+tiff(filename = here::here("SYMPTOMATIC_SAMPLES.tiff"), height = 1500, width = 3000, res = 300)
+SYMPTOMATIC
+dev.off()
+
